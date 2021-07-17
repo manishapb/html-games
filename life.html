@@ -1,0 +1,152 @@
+<html>
+    <head>
+        <title>Game of life</title>
+    </head>
+
+    <body>
+        <center>
+            <canvas id="sketch" width="800" height="600" style="border: 1px solid black;">
+            </canvas>            
+        </center>
+
+        <script id="lib">
+         let canvas = document.getElementById("sketch");
+         let ctx = canvas.getContext("2d");
+
+         let Board = {
+             width: canvas.width,
+             height: canvas.height,
+             rows: 60,
+             cols: 80
+         };
+
+         let Cell = {
+             width: (Board.width / Board.cols),
+             height: (Board.height / Board.rows)
+         };
+
+         let grid = [];
+
+         function gridLoop(rows, cols, row_fn, row_col_fn) {
+             for(let row=0; row < rows; row++) {
+                 if(row_fn) row_fn(row);
+
+                 for(let col=0; col < cols; col++) {
+                     row_col_fn(row, col);
+                 }
+             }
+         }
+
+         function emptyGrid() {
+             let aGrid = [];
+
+             gridLoop(Board.rows, Board.cols,
+                      (row) => {
+                          aGrid[row] = [];
+                      },
+                      (row, _) => {
+                          aGrid[row].push(0);
+                      }
+             );
+
+             return aGrid;
+         }
+
+         function init() {
+             grid = emptyGrid();
+         }
+
+         function clearBoard() {
+             gridLoop(Board.rows, Board.cols, null, (row, col) => {
+                 grid[row][col] = 0;
+             });
+         }
+
+         function scale(row, col) {
+             let x = Cell.width * col;
+             let y = Cell.height * row;
+
+             return [x, y];   
+         }
+
+         function drawCell(row, col, cell) {
+             let [x, y] = scale(row, col);
+             
+             if (cell == 0) {
+                 ctx.clearRect(x, y, Cell.width, Cell.height);
+             } else {
+                 ctx.fillRect(x, y, Cell.width, Cell.height);
+             }
+         }
+
+         function drawBoard() {
+             gridLoop(Board.rows, Board.cols, null, (row, col) => {
+                 drawCell(row, col, grid[row][col]);
+             });
+         }
+
+         function placeObject(startRow, startCol, obj) {
+             gridLoop(obj.length, obj[0].length, null, (row, col) => {
+                 grid[startRow + row][startCol + col] = obj[row][col];
+             });
+         }
+
+         function neighbors(row, col) {
+             let ns = [];
+
+             for(let i=row-1; i <= row+1; i++) {
+                 for (let j=col-1; j <= col+1; j++) {
+                     if(i>=0 && i<Board.rows
+                        && j>=0 && j<Board.cols) {
+                         ns.push([i,j]);
+                     }
+                 }
+             }
+
+             return ns;
+         };
+
+         function update(grid) {
+             let newGrid = emptyGrid();
+
+             gridLoop(Board.rows, Board.cols, null, (row, col) => {
+                 let ns = neighbors(row, col);
+                 let liveNs = ns.reduce((acc, x) => {
+                     return acc + grid[x[0]][x[1]];
+                 });
+
+                 if (grid[row][col] == 0) {
+                     if (liveNs == 3) {
+                         grid[row][col] = 1;
+                     }
+                 } else {
+                     if (liveNs < 2 || liveNs > 3) {
+                         grid[row][col] = 0;
+                     }
+                 }
+             });
+             
+             return newGrid;             
+         }
+        </script>
+        
+        <script id="main">
+         init();
+
+         let glider = [
+             [0,1,0],
+             [0,0,1],
+             [1,1,1]
+         ];
+
+         placeObject(1, 1, glider);
+
+         drawBoard();
+
+         setInterval(() => {
+             grid = update(grid);
+             drawBoard();
+         }, 1000);
+        </script>
+    </body>
+</html>
