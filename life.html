@@ -25,8 +25,6 @@
              height: (Board.height / Board.rows)
          };
 
-         let grid = [];
-
          function gridLoop(rows, cols, row_fn, row_col_fn) {
              for(let row=0; row < rows; row++) {
                  if(row_fn) row_fn(row);
@@ -52,11 +50,7 @@
              return aGrid;
          }
 
-         function init() {
-             grid = emptyGrid();
-         }
-
-         function clearBoard() {
+         function clearBoard(grid) {
              gridLoop(Board.rows, Board.cols, null, (row, col) => {
                  grid[row][col] = 0;
              });
@@ -79,13 +73,13 @@
              }
          }
 
-         function drawBoard() {
+         function drawBoard(grid) {
              gridLoop(Board.rows, Board.cols, null, (row, col) => {
                  drawCell(row, col, grid[row][col]);
              });
          }
 
-         function placeObject(startRow, startCol, obj) {
+         function placeObject(startRow, startCol, grid, obj) {
              gridLoop(obj.length, obj[0].length, null, (row, col) => {
                  grid[startRow + row][startCol + col] = obj[row][col];
              });
@@ -94,11 +88,12 @@
          function neighbors(row, col) {
              let ns = [];
 
-             for(let i=row-1; i <= row+1; i++) {
-                 for (let j=col-1; j <= col+1; j++) {
-                     if(i>=0 && i<Board.rows
-                        && j>=0 && j<Board.cols) {
-                         ns.push([i,j]);
+             for(let r=row-1; r <= row+1; r++) {
+                 for (let c=col-1; c <= col+1; c++) {
+                     if(r>=0 && r<Board.rows
+                        && c>=0 && c<Board.cols) {
+                         if ((r==row && c==col) !== true) {
+                             ns.push([r,c]); }
                      }
                  }
              }
@@ -113,39 +108,38 @@
                  let ns = neighbors(row, col);
                  let liveNs = ns.reduce((acc, x) => {
                      return acc + grid[x[0]][x[1]];
-                 });
+                 }, 0);
 
                  if (grid[row][col] == 0) {
                      if (liveNs == 3) {
-                         grid[row][col] = 1;
+                         newGrid[row][col] = 1;
                      }
                  } else {
                      if (liveNs < 2 || liveNs > 3) {
-                         grid[row][col] = 0;
+                         newGrid[row][col] = 0;
+                     } else {
+                         newGrid[row][col] = 1;
                      }
                  }
              });
              
-             return newGrid;             
+             return newGrid;
          }
         </script>
         
         <script id="main">
-         init();
-
+         let grid = emptyGrid();
          let glider = [
              [0,1,0],
              [0,0,1],
              [1,1,1]
          ];
 
-         placeObject(1, 1, glider);
-
-         drawBoard();
-
+         placeObject(1, 1, grid, glider);
+         drawBoard(grid);
          setInterval(() => {
              grid = update(grid);
-             drawBoard();
+             drawBoard(grid);
          }, 1000);
         </script>
     </body>
