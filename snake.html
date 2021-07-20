@@ -92,6 +92,10 @@
              return snake.body[snake.body.length - 1];
          }
 
+         function getSnakeTail(snake) {
+             return snake.body.slice(0, [snake.body.length - 2]);
+         }
+
          function growSnake(snake) {
              let head = getSnakeHead(snake);
              let [row, col] = head;
@@ -139,6 +143,15 @@
              return [row, col];
          }
 
+         function resetState(state) {
+             state.snake = {
+                 body: [[0,0], [0,1], [0,2]],
+                 dir: 'right',
+             };
+
+             state.insect = [getRandomCell()];
+         }
+
          function updateState(state) {
              growSnake(state.snake);
 
@@ -148,6 +161,12 @@
                  state.snake.body.shift();
              } else {
                  state.insect = [getRandomCell()];
+             }
+
+             let snakeTail = getSnakeTail(state.snake);
+
+             if (isColliding(snakeHead, snakeTail)) {
+                 resetState(state);
              }
          }
 
