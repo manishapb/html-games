@@ -88,43 +88,78 @@
              }
          }
 
-         function growSnake() {
-             head = snake.body[snake.body.length - 1];
-             row = head[0];
-             col = head[1];
+         function getSnakeHead(snake) {
+             return snake.body[snake.body.length - 1];
+         }
+
+         function growSnake(snake) {
+             let head = getSnakeHead(snake);
+             let [row, col] = head;
+             let [new_row, new_col] = head;
 
              if (snake.dir == 'right') {
-                 col =  head[1] + 1;
-                 if (col >= Board.cols) {
-                     col = 0;
+                 new_col =  col + 1;
+                 if (new_col >= Board.cols) {
+                     new_col = 0;
                  }
              } else if (snake.dir == 'left') {
-                 col = head[1] - 1;
-                 if (col < 0) {
-                     col = Board.cols - 1;
+                 new_col = col - 1;
+                 if (new_col < 0) {
+                     new_col = Board.cols - 1;
                  }
              } else if (snake.dir == 'up') {
-                 row = head[0] - 1;
-                 if (row < 0) {
-                     row = Board.rows - 1;
+                 new_row = row - 1;
+                 if (new_row < 0) {
+                     new_row = Board.rows - 1;
                  }
              } else if (snake.dir == 'down') {
-                 row = head[0] + 1;
-                 if (row >= Board.rows) {
-                     row = 0;
+                 new_row = row + 1;
+                 if (new_row >= Board.rows) {
+                     new_row = 0;
                  }
              }
-             snake.body.push([row, col]);
+
+             snake.body.push([new_row, new_col]);
          }
 
-         function moveSnake(snake) {
-             growSnake(snake);
-             snake.body.shift();
+         /**
+          * Returns a random integer between min (inclusive) and max (inclusive).
+          */
+         function getRandomInt(min, max) {
+             let _min = Math.ceil(min);
+             let _max = Math.floor(max);
+
+             return Math.floor(Math.random() * (_max - _min + 1)) + _min;
          }
 
-         window.addEventListener('keydown', changeDir, false);
+         function getRandomCell() {
+             let row = getRandomInt(0, Board.rows - 1);
+             let col = getRandomInt(0, Board.cols - 1);
 
-         function changeDir(e) {
+             return [row, col];
+         }
+
+         function updateState(state) {
+             growSnake(state.snake);
+
+             let snakeHead = [getSnakeHead(state.snake)];
+
+             if (!isColliding(snakeHead, state.insect)) {
+                 state.snake.body.shift();
+             } else {
+                 state.insect = [getRandomCell()];
+             }
+         }
+
+         function drawState(state) {
+             placeObject(0, 0, state.grid, state.snake.body);
+             placeObject(0, 0, state.grid, state.insect);
+             drawBoard(state.grid);
+         }
+
+         function handleKeyPress(state, e) {
+             let snake = state.snake;
+
              if (e.keyCode == '38' && snake.dir != "down") {
                  snake.dir = "up";
              } else if (e.keyCode == "40" && snake.dir != "up") {
@@ -134,28 +169,63 @@
              } else if (e.keyCode == "39" && snake.dir != "left") {
                  snake.dir = "right";
              }
+
+             e.preventDefault();
          }
 
+         function cellInObject(cell, obj) {
+             let [cellRow, cellCol] = cell;
+
+             for (let [row, col] of obj) {
+                 if (row == cellRow && col == cellCol) {
+                     return true;
+                 }
+             }
+
+             return false;
+         }
+
+         function isColliding(obj1, obj2) {
+             let smaller;
+             let bigger;
+
+             if (obj1.length > obj2.length) {
+                 smaller = obj2;
+                 bigger = obj1;
+             } else {
+                 smaller = obj1;
+                 bigger = obj2;
+             }
+
+             for (cell of smaller) {
+                 if (cellInObject(cell, bigger)) {
+                     return true;
+                 }
+             }
+
+             return false;
+         }
         </script>
 
         <script id="main">
-         let grid = emptyGrid();
-         let snake = {
-             body: [[0,0], [0,1], [0,2]],
-             dir: 'right',
+         let state = {
+             grid: emptyGrid(),
+             snake: {
+                 body: [[0,0], [0,1], [0,2]],
+                 dir: 'right',
+             },
+             insect: [getRandomCell()]
          };
 
-         placeObject(0, 0, grid, snake.body);
-         drawBoard(grid);
+         window.addEventListener('keydown', (e) => handleKeyPress(state, e), false);
+
+         drawState(state);
 
          setInterval(() => {
-             clearBoard(grid);
-
-             moveSnake(snake);
-             placeObject(0, 0, grid, snake.body);
-
-             drawBoard(grid);
-         }, 500);
+             clearBoard(state.grid);
+             updateState(state);
+             drawState(state);
+         }, 100);
         </script>
     </body>
 </html>
