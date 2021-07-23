@@ -28,6 +28,13 @@
              height: (Board.height / Board.rows)
          };
 
+         let KeyCode = {
+             up: '38',
+             down: '40',
+             left: '37',
+             right: '39'
+         }
+
          function gridLoop(rows, cols, row_fn, row_col_fn) {
              for(let row=0; row < rows; row++) {
                  if(row_fn) row_fn(row);
@@ -179,13 +186,13 @@
          function handleKeyPress(state, e) {
              let snake = state.snake;
 
-             if (e.keyCode == '38' && snake.dir != "down") {
+             if (e.keyCode == KeyCode.up && snake.dir != "down") {
                  snake.dir = "up";
-             } else if (e.keyCode == "40" && snake.dir != "up") {
+             } else if (e.keyCode == KeyCode.down && snake.dir != "up") {
                  snake.dir = "down";
-             } else if (e.keyCode == "37" && snake.dir != "right") {
+             } else if (e.keyCode == KeyCode.left && snake.dir != "right") {
                  snake.dir = "left";
-             } else if (e.keyCode == "39" && snake.dir != "left") {
+             } else if (e.keyCode == KeyCode.right && snake.dir != "left") {
                  snake.dir = "right";
              }
 
