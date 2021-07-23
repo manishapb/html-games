@@ -19,8 +19,8 @@
          let Board = {
              width: canvas.width,
              height: canvas.height,
-             rows: 60,
-             cols: 80
+             rows: 30,
+             cols: 30
          };
 
          let Cell = {
@@ -246,14 +246,11 @@
          function handleKeyPress(state, e) {
              let snake = state.snake;
 
-             if (e.keyCode == KeyCode.up && snake.dir != "down") {
-                 snake.dir = "up";
-             } else if (e.keyCode == KeyCode.down && snake.dir != "up") {
-                 snake.dir = "down";
-             } else if (e.keyCode == KeyCode.left && snake.dir != "right") {
-                 snake.dir = "left";
-             } else if (e.keyCode == KeyCode.right && snake.dir != "left") {
-                 snake.dir = "right";
+             if (e.keyCode == KeyCode.down) {
+             } else if (e.keyCode == KeyCode.left) {
+                 moveBlock(state.currBlock, [0, -1]);
+             } else if (e.keyCode == KeyCode.right) {
+                 moveBlock(state.currBlock, [0, 1]);
              }
 
              e.preventDefault();
