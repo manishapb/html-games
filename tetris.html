@@ -167,19 +167,40 @@
                  cell[1] += dc;
              }
          }
-         
-         function updateState(state) {
+
+         function cellUnder(cell, fixed) {
+             let [cellRow, cellCol] = cell;
              
+             return fixed[cellRow + 1].includes(cellCol);
+         }
+
+         function checkColliding(obj, fixed) {
+             for (let cell of obj) {
+                 if (cellUnder(cell, fixed)) {
+                     return "bottom";
+                 } 
+             }
+             return false;
+         }
+
+         function addToFixed(block, fixed) {
+             for (let [row, col] of block) {
+                 fixed[row].push(col);
+             }
+         }
+
+         function updateState(state) {
              if (checkColliding(state.currBlock, state.fixed) == "bottom") {
-                 addToBlocks(state.currBlock, state.blocks);
-                 refreshCurrBlock(state.currBlock);
+                 addToFixed(state.currBlock, state.fixed);
+                 state.currBlock = [];
+                 /*                  state.currBlock = getNextBlock();*/
              } else {
                  moveBlock(state.currBlock, [1, 0]);
              }
          }
 
          function drawState(state) {
-             placeObject(1, 0, state.grid, state.currBlock);
+             placeObject(0, 0, state.grid, state.currBlock);
              
              for (let rowStr of Object.keys(state.fixed)) {
                  let row = parseInt(rowStr);
@@ -218,8 +239,8 @@
          let centerCol = Board.cols/2;
          
          let Block = {
-             square: [[0, centerCol], [0, centerCol + 1],
-                      [1, centerCol], [1, centerCol + 1]],
+             square: [[2, centerCol], [2, centerCol + 1],
+                      [3, centerCol], [3, centerCol + 1]],
          };
          
          let state = {
