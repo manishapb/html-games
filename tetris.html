@@ -1,0 +1,249 @@
+<html>
+    <head>
+        <title>Tetris</title>
+    </head>
+
+    <body>
+        <center>
+            <h1>Tetris</h1>
+        </center>
+        <center>
+            <canvas id="sketch" width="800" height="600" style="border: 1px solid black;">
+            </canvas>
+        </center>
+
+        <script id="lib">
+         let canvas = document.getElementById("sketch");
+         let ctx = canvas.getContext("2d");
+
+         let Board = {
+             width: canvas.width,
+             height: canvas.height,
+             rows: 60,
+             cols: 80
+         };
+
+         let Cell = {
+             width: (Board.width / Board.cols),
+             height: (Board.height / Board.rows)
+         };
+
+         let KeyCode = {
+             up: '38',
+             down: '40',
+             left: '37',
+             right: '39'
+         }
+
+         function gridLoop(rows, cols, row_fn, row_col_fn) {
+             for(let row=0; row < rows; row++) {
+                 if(row_fn) row_fn(row);
+
+                 for(let col=0; col < cols; col++) {
+                     row_col_fn(row, col);
+                 }
+             }
+         }
+
+         function emptyGrid() {
+             let aGrid = [];
+
+             gridLoop(Board.rows, Board.cols,
+                      (row) => {
+                          aGrid[row] = [];
+                      },
+                      (row, _) => {
+                          aGrid[row].push(0);
+                      }
+             );
+
+             return aGrid;
+         }
+
+         function clearBoard(grid) {
+             gridLoop(Board.rows, Board.cols, null, (row, col) => {
+                 grid[row][col] = 0;
+             });
+         }
+
+         function scale(row, col) {
+             let x = Cell.width * col;
+             let y = Cell.height * row;
+
+             return [x, y];
+         }
+
+         function drawCell(row, col, cell) {
+             let [x, y] = scale(row, col);
+
+             if (cell == 0) {
+                 ctx.clearRect(x, y, Cell.width, Cell.height);
+             } else {
+                 ctx.fillRect(x, y, Cell.width, Cell.height);
+             }
+         }
+
+         function drawBoard(grid) {
+             gridLoop(Board.rows, Board.cols, null, (row, col) => {
+                 drawCell(row, col, grid[row][col]);
+             });
+         }
+
+         function placeObject(startRow, startCol, grid, obj) {
+             for ([row, col] of obj) {
+                 grid[startRow+row][startCol+col] = 1;
+             }
+         }
+
+         function getSnakeHead(snake) {
+             return snake.body[snake.body.length - 1];
+         }
+
+         function getSnakeTail(snake) {
+             return snake.body.slice(0, [snake.body.length - 2]);
+         }
+
+         function growSnake(snake) {
+             let head = getSnakeHead(snake);
+             let [row, col] = head;
+             let [new_row, new_col] = head;
+
+             if (snake.dir == 'right') {
+                 new_col =  col + 1;
+                 if (new_col >= Board.cols) {
+                     new_col = 0;
+                 }
+             } else if (snake.dir == 'left') {
+                 new_col = col - 1;
+                 if (new_col < 0) {
+                     new_col = Board.cols - 1;
+                 }
+             } else if (snake.dir == 'up') {
+                 new_row = row - 1;
+                 if (new_row < 0) {
+                     new_row = Board.rows - 1;
+                 }
+             } else if (snake.dir == 'down') {
+                 new_row = row + 1;
+                 if (new_row >= Board.rows) {
+                     new_row = 0;
+                 }
+             }
+
+             snake.body.push([new_row, new_col]);
+         }
+
+         /**
+          * Returns a random integer between min (inclusive) and max (inclusive).
+          */
+         function getRandomInt(min, max) {
+             let _min = Math.ceil(min);
+             let _max = Math.floor(max);
+
+             return Math.floor(Math.random() * (_max - _min + 1)) + _min;
+         }
+
+         function getRandomCell() {
+             let row = getRandomInt(0, Board.rows - 1);
+             let col = getRandomInt(0, Board.cols - 1);
+
+             return [row, col];
+         }
+
+         function resetState(state) {
+             state.snake = {
+                 body: [[0,0], [0,1], [0,2]],
+                 dir: 'right',
+             };
+
+             state.insect = [getRandomCell()];
+         }
+
+         function moveBlock(block, delta) {
+             let [dr, dc] = delta;
+             
+             for (cell of block) {
+                 cell[0] += dr;
+                 cell[1] += dc;
+             }
+         }
+         
+         function updateState(state) {
+             
+             if (checkColliding(state.currBlock, state.fixed) == "bottom") {
+                 addToBlocks(state.currBlock, state.blocks);
+                 refreshCurrBlock(state.currBlock);
+             } else {
+                 moveBlock(state.currBlock, [1, 0]);
+             }
+         }
+
+         function drawState(state) {
+             placeObject(1, 0, state.grid, state.currBlock);
+             
+             for (let rowStr of Object.keys(state.fixed)) {
+                 let row = parseInt(rowStr);
+                 
+                 for (let col of state.fixed[row]) {
+                     let cell = [row, col];
+                     placeObject(0, 0, state.grid, [cell]);
+                 }
+             }
+             
+             drawBoard(state.grid);
+         }
+
+         function handleKeyPress(state, e) {
+             let snake = state.snake;
+
+             if (e.keyCode == KeyCode.up && snake.dir != "down") {
+                 snake.dir = "up";
+             } else if (e.keyCode == KeyCode.down && snake.dir != "up") {
+                 snake.dir = "down";
+             } else if (e.keyCode == KeyCode.left && snake.dir != "right") {
+                 snake.dir = "left";
+             } else if (e.keyCode == KeyCode.right && snake.dir != "left") {
+                 snake.dir = "right";
+             }
+
+             e.preventDefault();
+         }
+
+         function range(n) {
+             return [...Array(n).keys()];
+         }
+        </script>
+
+        <script id="main">
+         let centerCol = Board.cols/2;
+         
+         let Block = {
+             square: [[0, centerCol], [0, centerCol + 1],
+                      [1, centerCol], [1, centerCol + 1]],
+         };
+         
+         let state = {
+             grid: emptyGrid(),
+             currBlock: Block.square,
+             fixed: {}
+         };
+
+         for (let row of range(Board.rows)) {
+             state.fixed[row] = [0, Board.cols-1];
+         }
+         
+         state.fixed[0] = range(Board.cols);
+         state.fixed[Board.rows - 1] = range(Board.cols);
+
+         window.addEventListener('keydown', (e) => handleKeyPress(state, e), false);
+
+         drawState(state);
+
+         setInterval(() => {
+             clearBoard(state.grid);
+             updateState(state);
+             drawState(state);
+         }, 100);
+        </script>
+    </body>
+</html>
