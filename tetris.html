@@ -156,6 +156,11 @@
              return Math.floor(Math.random() * (_max - _min + 1)) + _min;
          }
 
+         function getRandomElement(arr) {
+             let idx = getRandomInt(0, arr.length - 1);
+             return arr[idx];
+         }
+
          function getRandomCell() {
              let row = getRandomInt(0, Board.rows - 1);
              let col = getRandomInt(0, Board.cols - 1);
@@ -210,7 +215,8 @@
          }
 
          function getNextBlock() {
-             return deepCopyArray(Block.square);
+             let blockType = getRandomElement(Object.keys(Block));
+             return deepCopyArray(Block[blockType]);
          }
          
          function updateState(state) {
