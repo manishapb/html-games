@@ -179,9 +179,11 @@
              for (let cell of obj) {
                  if (cellUnder(cell, fixed)) {
                      collisions.push("bottom");
-                 } else if (cellLeft(cell, fixed)) {
+                 }
+                 if (cellLeft(cell, fixed)) {
                      collisions.push("left");
-                 } else if (cellRight(cell, fixed)) {
+                 }
+                 if (cellRight(cell, fixed)) {
                      collisions.push("right");
                  }
              }
