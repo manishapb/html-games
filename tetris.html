@@ -120,44 +120,6 @@
              }
          }
 
-         function getSnakeHead(snake) {
-             return snake.body[snake.body.length - 1];
-         }
-
-         function getSnakeTail(snake) {
-             return snake.body.slice(0, [snake.body.length - 2]);
-         }
-
-         function growSnake(snake) {
-             let head = getSnakeHead(snake);
-             let [row, col] = head;
-             let [new_row, new_col] = head;
-
-             if (snake.dir == 'right') {
-                 new_col =  col + 1;
-                 if (new_col >= Board.cols) {
-                     new_col = 0;
-                 }
-             } else if (snake.dir == 'left') {
-                 new_col = col - 1;
-                 if (new_col < 0) {
-                     new_col = Board.cols - 1;
-                 }
-             } else if (snake.dir == 'up') {
-                 new_row = row - 1;
-                 if (new_row < 0) {
-                     new_row = Board.rows - 1;
-                 }
-             } else if (snake.dir == 'down') {
-                 new_row = row + 1;
-                 if (new_row >= Board.rows) {
-                     new_row = 0;
-                 }
-             }
-
-             snake.body.push([new_row, new_col]);
-         }
-
          /**
           * Returns a random integer between min (inclusive) and max (inclusive).
           */
@@ -181,12 +143,7 @@
          }
 
          function resetState(state) {
-             state.snake = {
-                 body: [[0,0], [0,1], [0,2]],
-                 dir: 'right',
-             };
-
-             state.insect = [getRandomCell()];
+             state = {};
          }
 
          function moveBlock(block, delta) {
