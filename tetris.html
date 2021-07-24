@@ -192,13 +192,23 @@
              return fixed[cellRow + 1].includes(cellCol);
          }
 
+         function cellLeft(cell, fixed) {
+             let [cellRow, cellCol] = cell;
+
+             return fixed[cellRow].includes(cellCol - 1);
+         }
+
          function checkColliding(obj, fixed) {
+             let collisions = [];
+
              for (let cell of obj) {
                  if (cellUnder(cell, fixed)) {
-                     return "bottom";
-                 } 
+                     collisions.push("bottom");
+                 } else if (cellLeft(cell, fixed)) {
+                     collisions.push("left");
+                 }
              }
-             return false;
+             return collisions;
          }
 
          function addToFixed(block, fixed) {
@@ -208,9 +218,6 @@
          }
 
          function deepCopyArray(arr) {
-             console.log(arr);
-             console.log(JSON.stringify(arr));
-             
              return JSON.parse(JSON.stringify(arr));
          }
 
@@ -220,7 +227,7 @@
          }
          
          function updateState(state) {
-             if (checkColliding(state.currBlock, state.fixed) == "bottom") {
+             if (checkColliding(state.currBlock, state.fixed).includes("bottom")) {
                  addToFixed(state.currBlock, state.fixed);
                  state.currBlock = getNextBlock();
              } else {
@@ -244,11 +251,11 @@
          }
 
          function handleKeyPress(state, e) {
-             let snake = state.snake;
-
              if (e.keyCode == KeyCode.down) {
              } else if (e.keyCode == KeyCode.left) {
-                 moveBlock(state.currBlock, [0, -1]);
+                 if (!checkColliding(state.currBlock, state.fixed).includes("left")) {
+                     moveBlock(state.currBlock, [0, -1]);
+                 }
              } else if (e.keyCode == KeyCode.right) {
                  moveBlock(state.currBlock, [0, 1]);
              }
