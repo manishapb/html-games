@@ -231,7 +231,7 @@
 
          function getNextBlock() {
              let blockType = getRandomElement(Object.keys(Block));
-             return deepCopyArray(Block["square"]);
+             return deepCopyArray(Block[blockType]);
          }
          
          function clearFilledRows(fixed) {
@@ -243,11 +243,13 @@
                  }
 
                  if (fixed[row].length == Board.cols) {
-                     fixed[row] = [0, Board.cols - 1];
+                     while (row > 0) {
+                         fixed[row] = fixed[row-1];
+                         row -= 1;
+                     }
                  }
              }
          }
-
 
          function updateState(state) {
              if (checkColliding(state.currBlock, state.fixed).includes("bottom")) {
