@@ -36,28 +36,27 @@
          }
          
          let centerCol = Board.cols/2;
+         let blockMatrixSize = 4;
          
          let Block = {
-             square: [[2, centerCol -1], [2, centerCol], [2, centerCol + 1],
-                      [3, centerCol -1], [3, centerCol], [3, centerCol + 1],
-                      [4, centerCol -1], [4, centerCol], [4, centerCol + 1]],
+             square: [[1, 1], [1, 1]],
 
-             line: [[2, centerCol], [2, centerCol + 1], [2, centerCol + 2]],
+             line: [[1, 1, 1, 1]],
 
-             t: [                    [2, centerCol],
-                 [3, centerCol - 1], [3, centerCol], [3, centerCol + 1]],
+             t: [[0, 1, 0],
+                 [1, 1, 1]],
 
-             j: [[2, centerCol - 1],
-                 [3, centerCol - 1], [3, centerCol], [3, centerCol + 1]],
+             j: [[0, 0, 1],
+                 [1, 1, 1]],
 
-             l: [                                   [2, centerCol + 1],
-                 [3, centerCol - 1],[3, centerCol], [3, centerCol + 1]],
+             l: [[1, 0, 0],
+                 [1, 1, 1]],
 
-             z: [[2, centerCol -1], [2, centerCol],
-                                    [3, centerCol], [3, centerCol + 1]],
+             z: [[1, 1, 0],
+                 [0, 1, 1]],
 
-             s: [                    [2, centerCol], [2, centerCol + 1],
-                 [3, centerCol - 1], [3, centerCol]]
+             s: [[0, 1, 1],
+                 [1, 1, 0]]
          };
 
          function gridLoop(rows, cols, row_fn, row_col_fn) {
@@ -115,9 +114,9 @@
          }
 
          function placeObject(startRow, startCol, grid, obj) {
-             for ([row, col] of obj) {
-                 grid[startRow+row][startCol+col] = 1;
-             }
+             gridLoop(obj.length, obj[0].length, null, (row, col) => {
+                 grid[startRow + row][startCol + col] = obj[row][col];
+             });
          }
 
          /**
@@ -146,56 +145,6 @@
              state = {};
          }
 
-         function moveBlock(block, delta) {
-             let [dr, dc] = delta;
-             
-             for (cell of block) {
-                 cell[0] += dr;
-                 cell[1] += dc;
-             }
-         }
-
-         function cellUnder(cell, fixed) {
-             let [cellRow, cellCol] = cell;
-             
-             return fixed[cellRow + 1].includes(cellCol);
-         }
-
-         function cellLeft(cell, fixed) {
-             let [cellRow, cellCol] = cell;
-
-             return fixed[cellRow].includes(cellCol - 1);
-         }
-
-         function cellRight(cell, fixed) {
-             let [cellRow, cellCol] = cell;
-
-             return fixed[cellRow].includes(cellCol + 1);
-         }
-
-         function checkColliding(obj, fixed) {
-             let collisions = [];
-
-             for (let cell of obj) {
-                 if (cellUnder(cell, fixed)) {
-                     collisions.push("bottom");
-                 }
-                 if (cellLeft(cell, fixed)) {
-                     collisions.push("left");
-                 }
-                 if (cellRight(cell, fixed)) {
-                     collisions.push("right");
-                 }
-             }
-             return collisions;
-         }
-
-         function addToFixed(block, fixed) {
-             for (let [row, col] of block) {
-                 fixed[row].push(col);
-             }
-         }
-
          function deepCopyArray(arr) {
              return JSON.parse(JSON.stringify(arr));
          }
@@ -203,6 +152,17 @@
          function getNextBlock() {
              let blockType = getRandomElement(Object.keys(Block));
              return deepCopyArray(Block[blockType]);
+         }
+
+         function range(n) {
+             return [...Array(n).keys()];
+         }
+
+         function moveBlock(block, delta) {
+             let [dr, dc] = delta;
+
+             state.currBlock.row += dr;
+             state.currBlock.col += dc;
          }
          
          function clearFilledRows(fixed) {
@@ -222,29 +182,71 @@
              }
          }
 
+         function getBlockWidth(block) {
+             let width = 0;
+             for (row of block) {
+                 if (row.length > width) {
+                     width = row.length;
+                 }
+             }
+             return width;
+         }
+
+         function checkColliding(currBlock, fixed) {
+             let row = currBlock.row;
+             let col= currBlock.col;
+             let height = currBlock.block.length;
+             let width = getBlockWidth(currBlock.block);
+             let temp = fixed[row + height].slice(currBlock.col, currBlock.col + width);
+
+             if (temp.includes(1)) {
+                 return "bottom";
+             }
+             return false;
+         }
+
+         function addToFixed(currBlock, fixed) {
+             placeObject(currBlock.row, currBlock.col, fixed, currBlock.block);
+         }
+
+         function refreshBlock(state) {
+             state.currBlock.block = getNextBlock();
+             state.currBlock.row = 0;
+             state.currBlock,col = centerCol;
+         }
+
          function updateState(state) {
-             if (checkColliding(state.currBlock, state.fixed).includes("bottom")) {
+             if (checkColliding(state.currBlock, state.fixed)=='bottom') {
                  addToFixed(state.currBlock, state.fixed);
-                 state.currBlock = getNextBlock();
+                 refreshBlock(state);
              } else {
                  moveBlock(state.currBlock, [1, 0]);
              }
-             clearFilledRows(state.fixed);
          }
 
          function drawState(state) {
-             placeObject(0, 0, state.grid, state.currBlock);
-             
-             for (let rowStr of Object.keys(state.fixed)) {
-                 let row = parseInt(rowStr);
-                 
-                 for (let col of state.fixed[row]) {
-                     let cell = [row, col];
-                     placeObject(0, 0, state.grid, [cell]);
+             placeObject(0, 0, state.grid, state.fixed);
+             placeObject(state.currBlock.row,
+                         state.currBlock.col,
+                         state.grid,
+                         state.currBlock.block);
+
+             drawBoard(state.grid);
+         }
+
+         function rotateClockwise(block) {
+             // Traverse each cycle
+             for (i = 0; i < parseInt(N / 2); i++) {
+                 for (j = i; j < N - i - 1; j++) {
+                     // Swap elements of each cycle
+                     // in clockwise direction
+                     var temp = a[i][j];
+                     a[i][j] = a[N - 1 - j][i];
+                     a[N - 1 - j][i] = a[N - 1 - i][N - 1 - j];
+                     a[N - 1 - i][N - 1 - j] = a[j][N - 1 - i];
+                     a[j][N - 1 - i] = temp;
                  }
              }
-             
-             drawBoard(state.grid);
          }
 
          function handleKeyPress(state, e) {
@@ -262,25 +264,30 @@
              e.preventDefault();
          }
 
-         function range(n) {
-             return [...Array(n).keys()];
+         function fillArray(count, filler) {
+             return [...Array(count).fill(filler)];
          }
+
         </script>
 
         <script id="main">
          
          let state = {
              grid: emptyGrid(),
-             currBlock: getNextBlock(),
-             fixed: {}
+             currBlock: {
+                 block: getNextBlock(),
+                 row: 0,
+                 col: centerCol
+             },
+             fixed: []
          };
 
          for (let row of range(Board.rows)) {
-             state.fixed[row] = [0, Board.cols-1];
+             state.fixed[row] = [1].concat(fillArray(Board.cols - 2, 0)).concat([1]);
          }
          
-         state.fixed[0] = range(Board.cols);
-         state.fixed[Board.rows - 1] = range(Board.cols);
+         state.fixed[0] = fillArray(Board.cols, 1);
+         state.fixed[Board.rows - 1] = fillArray(Board.cols, 1);
 
          window.addEventListener('keydown', (e) => handleKeyPress(state, e), false);
 
