@@ -197,10 +197,16 @@
              let col= currBlock.col;
              let height = currBlock.block.length;
              let width = getBlockWidth(currBlock.block);
-             let temp = fixed[row + height].slice(currBlock.col, currBlock.col + width);
+             let bottom = fixed[row + height].slice(currBlock.col, currBlock.col + width);
 
-             if (temp.includes(1)) {
-                 return "bottom";
+
+             if (bottom.includes(1)) {
+                 if (currBlock.row==0) {
+                     return "top";
+                 }
+                 else {
+                     return "bottom";
+                 }
              }
              return false;
          }
@@ -216,10 +222,16 @@
          }
 
          function updateState(state) {
-             if (checkColliding(state.currBlock, state.fixed)=='bottom') {
+             let collision = checkColliding(state.currBlock, state.fixed);
+
+             if (collision=='bottom') {
                  addToFixed(state.currBlock, state.fixed);
                  refreshBlock(state);
-             } else {
+             }
+             else if (collision=='top'){
+                 initializeState(state);
+             }
+             else {
                  moveBlock(state.currBlock, [1, 0]);
              }
          }
@@ -266,6 +278,19 @@
 
          function fillArray(count, filler) {
              return [...Array(count).fill(filler)];
+         }
+
+         function initializeState(state) {
+             state.grid = emptyGrid();
+             state.currBlock.block = getNextBlock();
+             state.currBlock.row =0;
+             state.currBlock.col = centerCol;
+             state.fixed = [];
+             for (let row of range(Board.rows)) {
+                 state.fixed[row] = [1].concat(fillArray(Board.cols - 2, 0)).concat([1]);
+             }
+             state.fixed[0] = fillArray(Board.cols, 1);
+             state.fixed[Board.rows - 1] = fillArray(Board.cols, 1);
          }
 
         </script>
