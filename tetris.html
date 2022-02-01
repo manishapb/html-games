@@ -191,22 +191,47 @@
              }
              return width;
          }
+         /* fix this */
+         function checkCollidingLeft(currBlock, fixed) {
+             let row = currBlock.row;
+             let col = currBlock.col;
+             let height = currBlock.block.length;
 
-         function checkColliding(currBlock, fixed) {
+             let left_col = [fixed[row][col - 1], fixed[row + 1][col - 1]];
+             console.log("left col: ",left_col)
+             console.log("block col:", col)
+
+             if (col <= 1) {
+                 return true;
+             }
+             if (left_col.includes(1)) {
+                 return true;
+             }
+         }
+
+         function checkCollidingBottom(currBlock, fixed) {
              let row = currBlock.row;
              let col= currBlock.col;
              let height = currBlock.block.length;
              let width = getBlockWidth(currBlock.block);
              let bottom = fixed[row + height].slice(currBlock.col, currBlock.col + width);
 
-
-             if (bottom.includes(1)) {
-                 if (currBlock.row==0) {
+             if ( (currBlock.col == Board.cols - 2) || (bottom.includes(1)) ) {
+                 return true;
+             }
+         }
+         
+         function checkColliding(currBlock, fixed) {
+             if (checkCollidingBottom(currBlock, fixed)) {
+                 if (currBlock.row == 0) {
                      return "top";
                  }
                  else {
                      return "bottom";
                  }
+             } else if (checkCollidingLeft(currBlock, fixed)) {
+                 console.log('collides left');
+                 return "left";
              }
              return false;
          }
@@ -218,7 +243,7 @@
          function refreshBlock(state) {
              state.currBlock.block = getNextBlock();
              state.currBlock.row = 0;
-             state.currBlock,col = centerCol;
+             state.currBlock.col = centerCol;
          }
 
          function updateState(state) {
@@ -263,12 +288,14 @@
 
          function handleKeyPress(state, e) {
              if (e.keyCode == KeyCode.down) {
-             } else if (e.keyCode == KeyCode.left) {
-                 if (!checkColliding(state.currBlock, state.fixed).includes("left")) {
+             }
+             else if (e.keyCode == KeyCode.left) {
+                 if ( !(checkColliding(state.currBlock, state.fixed) == "left")) {
                      moveBlock(state.currBlock, [0, -1]);
                  }
+                 else { console.log("checkcolliding returns left!"); }
              } else if (e.keyCode == KeyCode.right) {
-                 if (!checkColliding(state.currBlock, state.fixed).includes("right")) {
+                 if ( (!checkColliding(state.currBlock, state.fixed) == "right")) {
                      moveBlock(state.currBlock, [0, 1]);
                  }
              }
